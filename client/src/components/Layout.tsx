@@ -99,10 +99,9 @@ export function Layout({ children }: { children: ReactNode }) {
             <div>
               <h4 className="font-bold mb-4">Contact</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>Main Market, Rudauli</li>
-                <li>Ayodhya, Uttar Pradesh</li>
-                <li>+91 98765 43210</li>
-                <li>info@saketpustak.com</li>
+                <li>Rudauli, Ayodhya – 224120, UP</li>
+                <li>Mobile: 7754057200</li>
+                <li>GST: 09AFQPR5141C1ZA</li>
               </ul>
             </div>
             
@@ -110,8 +109,9 @@ export function Layout({ children }: { children: ReactNode }) {
               <h4 className="font-bold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/" className="hover:text-primary transition-colors">Home</Link></li>
+                <li><Link href="/about" className="hover:text-primary transition-colors">About</Link></li>
+                <li><Link href="/services" className="hover:text-primary transition-colors">Services</Link></li>
                 <li><Link href="/login" className="hover:text-primary transition-colors">Customer Login</Link></li>
-                <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
               </ul>
             </div>
           </div>
