@@ -6,6 +6,7 @@ export const customers = pgTable("customers", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   mobile: text("mobile").notNull().unique(),
+  pin: text("pin"), // Hashed PIN
   createdAt: timestamp("created_at").defaultNow(),
 });
 

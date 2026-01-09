@@ -1,6 +1,48 @@
 import { z } from "zod";
 
 export const api = {
+  auth: {
+    checkMobile: {
+      method: "POST" as const,
+      path: "/api/auth/check-mobile",
+      input: z.object({ mobile: z.string() }),
+      responses: {
+        200: z.object({ exists: z.boolean() }),
+      },
+    },
+    setupPin: {
+      method: "POST" as const,
+      path: "/api/auth/setup-pin",
+      input: z.object({ mobile: z.string(), pin: z.string().length(4) }),
+      responses: {
+        200: z.object({ success: z.boolean(), session: z.any() }),
+        400: z.object({ message: z.string() }),
+      },
+    },
+    loginPin: {
+      method: "POST" as const,
+      path: "/api/auth/login-pin",
+      input: z.object({ mobile: z.string(), pin: z.string().length(4) }),
+      responses: {
+        200: z.object({ success: z.boolean(), session: z.any() }),
+        401: z.object({ message: z.string() }),
+      },
+    },
+    me: {
+      method: "GET" as const,
+      path: "/api/auth/me",
+      responses: {
+        200: z.object({ user: z.any().nullable() }),
+      },
+    },
+    logout: {
+      method: "POST" as const,
+      path: "/api/auth/logout",
+      responses: {
+        200: z.object({ success: z.boolean() }),
+      },
+    },
+  },
   admin: {
     uploadTally: {
       method: "POST" as const,

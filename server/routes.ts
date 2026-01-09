@@ -17,10 +17,78 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-export async function registerRoutes(
-  httpServer: Server,
-  app: Express
-): Promise<Server> {
+import bcrypt from "bcryptjs";
+
+// ... inside registerRoutes ...
+
+  app.post(api.auth.checkMobile.path, async (req, res) => {
+    const { mobile } = api.auth.checkMobile.input.parse(req.body);
+    const { data: customer } = await supabase
+      .from("customers")
+      .select("id, pin")
+      .eq("mobile", mobile)
+      .single();
+    
+    res.json({ exists: !!customer && !!customer.pin });
+  });
+
+  app.post(api.auth.setupPin.path, async (req, res) => {
+    const { mobile, pin } = api.auth.setupPin.input.parse(req.body);
+    const hashedPin = await bcrypt.hash(pin, 10);
+    
+    // Check if customer exists first
+    const { data: existing } = await supabase
+      .from("customers")
+      .select("id")
+      .eq("mobile", mobile)
+      .single();
+
+    if (existing) {
+      const { error } = await supabase
+        .from("customers")
+        .update({ pin: hashedPin })
+        .eq("mobile", mobile);
+      if (error) return res.status(400).json({ message: error.message });
+    } else {
+      const { error } = await supabase
+        .from("customers")
+        .insert({ mobile, name: "New Customer", pin: hashedPin });
+      if (error) return res.status(400).json({ message: error.message });
+    }
+
+    // In a real app, we would create a session here. 
+    // Since we are using Supabase Auth for dashboard but custom for login,
+    // we might need to handle session state carefully.
+    // For MVP, we'll return success and handle login logic in frontend.
+    res.json({ success: true, session: { mobile } });
+  });
+
+  app.post(api.auth.loginPin.path, async (req, res) => {
+    const { mobile, pin } = api.auth.loginPin.input.parse(req.body);
+    const { data: customer } = await supabase
+      .from("customers")
+      .select("*")
+      .eq("mobile", mobile)
+      .single();
+
+    if (!customer || !customer.pin) {
+      return res.status(401).json({ message: "Mobile not registered" });
+    }
+
+    const valid = await bcrypt.compare(pin, customer.pin);
+    if (!valid) {
+      return res.status(401).json({ message: "Incorrect PIN" });
+    }
+
+    res.json({ success: true, session: { mobile, id: customer.id } });
+  });
+
+  app.get(api.auth.me.path, async (req, res) => {
+    // This would typically check a cookie or token.
+    // For this fast edit, we'll keep it simple.
+    res.json({ user: null });
+  });
+
 
   app.post(api.admin.uploadTally.path, upload.single("file"), async (req, res) => {
     try {
