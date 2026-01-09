@@ -1,11 +1,15 @@
-import type { Express } from "express";
-import { createServer, type Server } from "http";
+import type { Express, Request } from "express";
+import type { Server } from "http";
 import multer from "multer";
 import * as XLSX from "xlsx";
 import { createClient } from "@supabase/supabase-js";
 import { api } from "@shared/routes";
 import { format } from "date-fns";
 import bcrypt from "bcryptjs";
+
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
 
 const supabaseUrl = process.env.SUPABASE_URL || "https://placeholder.supabase.co";
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || "placeholder";
@@ -19,67 +23,79 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   app.post(api.auth.checkMobile.path, async (req, res) => {
-    const { mobile } = api.auth.checkMobile.input.parse(req.body);
-    const { data: customer } = await supabase
-      .from("customers")
-      .select("id, pin")
-      .eq("mobile", mobile)
-      .single();
-    
-    res.json({ exists: !!customer && !!customer.pin });
+    try {
+      const { mobile } = api.auth.checkMobile.input.parse(req.body);
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("id, pin")
+        .eq("mobile", mobile)
+        .single();
+      
+      res.json({ exists: !!customer && !!customer.pin });
+    } catch (error) {
+      res.json({ exists: false });
+    }
   });
 
   app.post(api.auth.setupPin.path, async (req, res) => {
-    const { mobile, pin } = api.auth.setupPin.input.parse(req.body);
-    const hashedPin = await bcrypt.hash(pin, 10);
-    
-    const { data: existing } = await supabase
-      .from("customers")
-      .select("id")
-      .eq("mobile", mobile)
-      .single();
+    try {
+      const { mobile, pin } = api.auth.setupPin.input.parse(req.body);
+      const hashedPin = await bcrypt.hash(pin, 10);
+      
+      const { data: existing } = await supabase
+        .from("customers")
+        .select("id")
+        .eq("mobile", mobile)
+        .single();
 
-    if (existing) {
-      const { error } = await supabase
-        .from("customers")
-        .update({ pin: hashedPin })
-        .eq("mobile", mobile);
-      if (error) return res.status(400).json({ message: error.message });
-    } else {
-      const { error } = await supabase
-        .from("customers")
-        .insert({ mobile, name: "New Customer", pin: hashedPin });
-      if (error) return res.status(400).json({ message: error.message });
+      if (existing) {
+        const { error } = await supabase
+          .from("customers")
+          .update({ pin: hashedPin })
+          .eq("mobile", mobile);
+        if (error) return res.status(400).json({ message: error.message });
+      } else {
+        const { error } = await supabase
+          .from("customers")
+          .insert({ mobile, name: "New Customer", pin: hashedPin });
+        if (error) return res.status(400).json({ message: error.message });
+      }
+
+      res.json({ success: true, session: { mobile } });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
     }
-
-    res.json({ success: true, session: { mobile } });
   });
 
   app.post(api.auth.loginPin.path, async (req, res) => {
-    const { mobile, pin } = api.auth.loginPin.input.parse(req.body);
-    const { data: customer } = await supabase
-      .from("customers")
-      .select("*")
-      .eq("mobile", mobile)
-      .single();
+    try {
+      const { mobile, pin } = api.auth.loginPin.input.parse(req.body);
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("mobile", mobile)
+        .single();
 
-    if (!customer || !customer.pin) {
-      return res.status(401).json({ message: "Mobile not registered" });
+      if (!customer || !customer.pin) {
+        return res.status(401).json({ message: "Mobile not registered" });
+      }
+
+      const valid = await bcrypt.compare(pin, customer.pin);
+      if (!valid) {
+        return res.status(401).json({ message: "Incorrect PIN" });
+      }
+
+      res.json({ success: true, session: { mobile, id: customer.id } });
+    } catch (error: any) {
+      res.status(401).json({ message: error.message });
     }
-
-    const valid = await bcrypt.compare(pin, customer.pin);
-    if (!valid) {
-      return res.status(401).json({ message: "Incorrect PIN" });
-    }
-
-    res.json({ success: true, session: { mobile, id: customer.id } });
   });
 
   app.get(api.auth.me.path, async (req, res) => {
     res.json({ user: null });
   });
 
-  app.post(api.admin.uploadTally.path, upload.single("file"), async (req, res) => {
+  app.post(api.admin.uploadTally.path, upload.single("file"), async (req: MulterRequest, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
