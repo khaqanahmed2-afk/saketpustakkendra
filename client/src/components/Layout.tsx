@@ -29,9 +29,11 @@ export function Layout({ children }: { children: ReactNode }) {
           </Link>
 
           <nav className="flex items-center gap-4">
-            <Link href="/admin" className={location === '/admin' ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}>
-              Admin
-            </Link>
+            {user?.role === 'admin' && (
+              <Link href="/admin" className={location === '/admin' ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}>
+                Admin
+              </Link>
+            )}
             {user ? (
               <div className="flex items-center gap-4">
                 <Link href="/dashboard" className={location === '/dashboard' ? 'text-primary font-medium hidden md:block' : 'text-muted-foreground hover:text-foreground hidden md:block'}>

@@ -5,10 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Upload, FileUp, CheckCircle, AlertCircle } from "lucide-react";
 import { useUploadTally } from "@/hooks/use-admin";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/use-auth";
+import { Redirect } from "wouter";
 
 export default function Admin() {
+  const { user, loading } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const uploadMutation = useUploadTally();
+
+  if (loading) return null;
+  if (!user || user.role !== 'admin') {
+    return <Redirect to="/login" />;
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
