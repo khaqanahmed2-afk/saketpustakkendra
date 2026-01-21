@@ -29,11 +29,6 @@ export function Layout({ children }: { children: ReactNode }) {
           </Link>
 
           <nav className="flex items-center gap-4">
-            {user?.role === 'admin' && (
-              <Link href="/admin" className={location === '/admin' ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}>
-                Admin
-              </Link>
-            )}
             {user ? (
               <div className="flex items-center gap-4">
                 <Link href="/dashboard" className={location === '/dashboard' ? 'text-primary font-medium hidden md:block' : 'text-muted-foreground hover:text-foreground hidden md:block'}>
@@ -52,12 +47,6 @@ export function Layout({ children }: { children: ReactNode }) {
                       <DropdownMenuItem className="cursor-pointer">
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         <span>Dashboard</span>
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href="/admin">
-                      <DropdownMenuItem className="cursor-pointer">
-                        <Upload className="mr-2 h-4 w-4" />
-                        <span>Admin Import</span>
                       </DropdownMenuItem>
                     </Link>
                     <DropdownMenuItem onClick={signOut} className="text-red-600 focus:text-red-600 cursor-pointer">
@@ -113,6 +102,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 <li><Link href="/about" className="hover:text-primary transition-colors">About</Link></li>
                 <li><Link href="/services" className="hover:text-primary transition-colors">Services</Link></li>
                 <li><Link href="/login" className="hover:text-primary transition-colors">Customer Login</Link></li>
+                <li><Link href="/admin" className="hover:text-primary transition-colors">Admin Import</Link></li>
               </ul>
             </div>
           </div>
