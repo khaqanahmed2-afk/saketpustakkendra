@@ -73,7 +73,7 @@ export default function Dashboard() {
     });
     
     // Footer
-    doc.text("Thank you for your business!", 105, doc.lastAutoTable.finalY + 20, { align: "center" });
+    doc.text("Thank you for your business!", 105, doc.lastAutoTable?.finalY + 20 || 150, { align: "center" });
     
     doc.save(`Bill_${bill.billNo}.pdf`);
   };
@@ -210,10 +210,10 @@ export default function Dashboard() {
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="ledger" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8 h-14 bg-white shadow-sm rounded-2xl p-1.5">
-              <TabsTrigger value="ledger" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white font-medium">Ledger</TabsTrigger>
-              <TabsTrigger value="bills" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white font-medium">Bills</TabsTrigger>
-              <TabsTrigger value="payments" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white font-medium">Payments</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 mb-8 h-14 bg-white shadow-sm rounded-2xl p-1.5 overflow-x-auto">
+              <TabsTrigger value="ledger" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white font-medium whitespace-nowrap">Ledger</TabsTrigger>
+              <TabsTrigger value="bills" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white font-medium whitespace-nowrap">Bills</TabsTrigger>
+              <TabsTrigger value="payments" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white font-medium whitespace-nowrap">Payments</TabsTrigger>
             </TabsList>
 
             <TabsContent value="ledger" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -226,7 +226,8 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
+                    {/* Desktop Table View */}
+                    <table className="hidden md:table w-full text-sm text-left">
                       <thead className="bg-slate-50 text-muted-foreground font-medium uppercase text-xs">
                         <tr>
                           <th className="px-6 py-4">Date</th>
@@ -252,13 +253,44 @@ export default function Dashboard() {
                             </td>
                           </tr>
                         ))}
-                        {(!ledger || ledger.length === 0) && (
-                          <tr>
-                            <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">No transactions found</td>
-                          </tr>
-                        )}
                       </tbody>
                     </table>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden divide-y divide-slate-100 bg-white">
+                      {ledger?.map((entry) => (
+                        <div key={entry.id} className="p-4 space-y-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-bold text-slate-800">{format(new Date(entry.entryDate), 'dd MMM yyyy')}</p>
+                              <p className="text-xs text-muted-foreground">{entry.voucherNo || "No Voucher"}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-slate-700">₹{Number(entry.balance).toLocaleString()}</p>
+                              <p className="text-[10px] uppercase text-muted-foreground">Balance</p>
+                            </div>
+                          </div>
+                          <div className="flex justify-between gap-4 pt-1">
+                            <div className="flex-1 bg-orange-50 p-2 rounded-lg border border-orange-100">
+                              <p className="text-[10px] uppercase text-orange-600 font-bold mb-0.5">Debit</p>
+                              <p className="text-sm font-bold text-orange-700">
+                                {Number(entry.debit) > 0 ? `₹${Number(entry.debit).toLocaleString()}` : "-"}
+                              </p>
+                            </div>
+                            <div className="flex-1 bg-green-50 p-2 rounded-lg border border-green-100">
+                              <p className="text-[10px] uppercase text-green-600 font-bold mb-0.5">Credit</p>
+                              <p className="text-sm font-bold text-green-700">
+                                {Number(entry.credit) > 0 ? `₹${Number(entry.credit).toLocaleString()}` : "-"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {(!ledger || ledger.length === 0) && (
+                      <div className="px-6 py-12 text-center text-muted-foreground">No transactions found</div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
