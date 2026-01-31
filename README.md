@@ -83,3 +83,4 @@ DATABASE_URL=postgres://...
 
 ## 🤝 Support
 For support, contact the system administrator or the development team.
+
