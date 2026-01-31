@@ -3,25 +3,33 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
+import Shop from "@/pages/Shop";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Admin from "@/pages/Admin";
+import Cart from "@/pages/Cart";
+import Orders from "@/pages/Orders";
+import AddProduct from "@/pages/admin/AddProduct";
+import VyaparSync from "@/pages/admin/VyaparSync";
+import ProductManagement from "@/pages/admin/ProductManagement";
 import ChangePin from "@/pages/ChangePin";
-
-import About from "@/pages/About";
-import Services from "@/pages/Services";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/about" component={About} />
-      <Route path="/services" component={Services} />
+      <Route path="/shop" component={Shop} />
       <Route path="/login" component={Login} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/cart" component={Cart} />
+      <Route path="/orders" component={Orders} />
       <Route path="/admin" component={Admin} />
+      <Route path="/admin/add-product" component={AddProduct} />
+      <Route path="/admin/products" component={ProductManagement} />
+      <Route path="/admin/vyapar-sync" component={VyaparSync} />
       <Route path="/change-pin" component={ChangePin} />
       <Route component={NotFound} />
     </Switch>
@@ -30,12 +38,16 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <div className="min-h-screen bg-background font-sans antialiased">
+            <Router />
+            <Toaster />
+          </div>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

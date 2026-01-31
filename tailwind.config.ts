@@ -11,6 +11,10 @@ export default {
         sm: ".1875rem", /* 3px */
       },
       colors: {
+        // Custom Pastel Colors
+        cream: "hsl(40, 50%, 98%)",
+        mint: "hsl(160, 60%, 45%)",
+
         // Flat / base colors (regular buttons)
         background: "hsl(var(--background) / <alpha-value>)",
         foreground: "hsl(var(--foreground) / <alpha-value>)",
@@ -84,6 +88,7 @@ export default {
       },
       fontFamily: {
         sans: ["var(--font-sans)"],
+        display: ["var(--font-display)"],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
       },

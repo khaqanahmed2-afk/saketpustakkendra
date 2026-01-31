@@ -4,16 +4,33 @@ import * as schema from "@shared/schema";
 
 const { Pool } = pg;
 
-// This is for Drizzle ORM if we were to use it directly against the DB.
-// Since we are primarily using Supabase Client for this specific request (due to Auth/RLS requirements),
-// this might be unused or used only if DATABASE_URL is provided for direct connection.
-// We keep it to satisfy the template structure.
+const databaseUrl = process.env.DATABASE_URL;
 
-if (!process.env.DATABASE_URL) {
-  console.warn("DATABASE_URL not set. Drizzle will not be able to connect.");
+if (!databaseUrl) {
+  console.warn("DATABASE_URL not set. Session store and Drizzle will use fallback connection.");
 }
 
-export const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL || "postgres://user:password@localhost:5432/db" 
+// Robust SSL configuration for managed Postgres (Supabase, Heroku, etc.)
+const sslConfig =
+  !databaseUrl || databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1")
+    ? false
+    : {
+      rejectUnauthorized: false,
+    };
+
+export const pool = new Pool({
+  connectionString: databaseUrl || "postgres://user:password@localhost:5432/db",
+  ssl: sslConfig,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 30000, // Increased to 30s
 });
+
 export const db = drizzle(pool, { schema });
+
+// Connection check
+pool.query('SELECT 1').then(() => {
+  console.log("Database connection successful");
+}).catch(err => {
+  console.error("Database connection failed:", err.message);
+});

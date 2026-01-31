@@ -1,115 +1,109 @@
-import { useState } from "react";
 import { Layout } from "@/components/Layout";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ShinyButton } from "@/components/ui/shiny-button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Upload, FileUp, CheckCircle, AlertCircle } from "lucide-react";
-import { useUploadTally } from "@/hooks/use-admin";
-import { motion } from "framer-motion";
+import { Upload, ArrowRight, FileSpreadsheet, Package } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { Redirect } from "wouter";
+import { Redirect, Link } from "wouter";
+import { motion } from "framer-motion";
 
 export default function Admin() {
   const { user, loading } = useAuth();
-  const [file, setFile] = useState<File | null>(null);
-  const uploadMutation = useUploadTally();
 
   if (loading) return null;
   if (!user || user.role !== 'admin') {
     return <Redirect to="/login" />;
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
-  const handleUpload = () => {
-    if (file) {
-      uploadMutation.mutate(file);
-    }
-  };
-
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-12">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-2xl mx-auto"
-        >
-          <div className="text-center mb-10">
-            <h1 className="text-3xl font-display font-bold mb-2">Admin Import</h1>
-            <p className="text-muted-foreground">Upload Tally Export (XML/Excel) to update ledger.</p>
+      <div className="min-h-screen bg-secondary/30 pb-20">
+        <div className="bg-gradient-to-r from-primary/10 via-secondary to-accent/10 pt-12 pb-20 px-4 border-b border-primary/5">
+          <div className="container mx-auto max-w-4xl text-center">
+            <h1 className="text-4xl font-display font-bold mb-4 text-slate-800">Admin Console</h1>
+            <p className="text-lg text-slate-500 max-w-2xl mx-auto">
+              Manage your billing data, imports, and system configurations from one central hub.
+            </p>
           </div>
+        </div>
 
-          <Card className="border-2 border-dashed border-slate-200 shadow-xl rounded-[2rem] bg-white overflow-hidden">
-            <CardHeader className="bg-slate-50 border-b border-slate-100">
-              <CardTitle className="flex items-center justify-center gap-2">
-                <Upload className="w-5 h-5 text-primary" />
-                Upload Data
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-12">
-              <div className="flex flex-col items-center justify-center space-y-6">
-                <div className={`
-                  w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300
-                  ${file ? "bg-green-100 text-green-600 scale-110" : "bg-primary/5 text-primary/40"}
-                `}>
-                  {file ? <CheckCircle className="w-12 h-12" /> : <FileUp className="w-12 h-12" />}
-                </div>
-
-                <div className="text-center">
-                  <label 
-                    htmlFor="file-upload" 
-                    className="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                  >
-                    <span className="px-6 py-3 bg-primary text-white rounded-xl shadow-lg hover:shadow-xl transition-all inline-block hover:-translate-y-1">Select File</span>
-                    <input 
-                      id="file-upload" 
-                      name="file-upload" 
-                      type="file" 
-                      className="sr-only" 
-                      accept=".xml,.xlsx,.xls"
-                      onChange={handleFileChange}
-                    />
-                  </label>
-                  <p className="pl-1 mt-4 text-sm text-muted-foreground">or drag and drop</p>
-                  <p className="text-xs text-muted-foreground mt-1">XML or Excel up to 10MB</p>
-                </div>
-
-                {file && (
-                  <div className="w-full bg-slate-50 p-4 rounded-xl flex items-center justify-between border border-slate-100">
-                    <span className="text-sm font-medium truncate max-w-[200px]">{file.name}</span>
-                    <button 
-                      onClick={() => setFile(null)}
-                      className="text-xs text-red-500 hover:text-red-700 font-medium"
-                    >
-                      Remove
-                    </button>
+        <div className="container mx-auto px-4 -mt-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8"
+          >
+            {/* Vyapar Sync Card */}
+            <div className="group relative">
+              <Card className="relative h-full border-primary/10 bg-white rounded-[2rem] shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group-hover:-translate-y-1">
+                <CardHeader className="p-8 pb-4">
+                  <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-blue-600 group-hover:scale-110 transition-transform duration-300">
+                    <FileSpreadsheet className="w-7 h-7" />
                   </div>
-                )}
+                  <CardTitle className="text-2xl font-bold text-slate-800">Vyapar Billing Sync</CardTitle>
+                </CardHeader>
+                <CardContent className="p-8 pt-2">
+                  <p className="text-slate-500 mb-8 leading-relaxed">
+                    Import Customers, Invoices, and Items directly from Vyapar Excel exports. Sync to your database for live reporting.
+                  </p>
 
-                <ShinyButton 
-                  onClick={handleUpload} 
-                  disabled={!file || uploadMutation.isPending}
-                  className="w-full mt-4"
-                >
-                  {uploadMutation.isPending ? "Processing..." : "Import Data"}
-                </ShinyButton>
+                  <Link href="/admin/vyapar-sync">
+                    <ShinyButton className="w-full bg-blue-500 text-white hover:bg-blue-600 shadow-blue-200 group-hover:translate-x-1 transition-all rounded-xl py-6">
+                      Open Sync Tool <ArrowRight className="w-4 h-4 ml-2" />
+                    </ShinyButton>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
 
-                {uploadMutation.isError && (
-                  <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg w-full">
-                    <AlertCircle className="w-4 h-4" />
-                    {uploadMutation.error.message}
+            {/* Product Management Card */}
+            <div className="group relative">
+              <Card className="relative h-full border-primary/10 bg-white rounded-[2rem] shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group-hover:-translate-y-1">
+                <CardHeader className="p-8 pb-4">
+                  <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center mb-6 text-green-600 group-hover:scale-110 transition-transform duration-300">
+                    <Package className="w-7 h-7" />
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+                  <CardTitle className="text-2xl font-bold text-slate-800">Product Management</CardTitle>
+                </CardHeader>
+                <CardContent className="p-8 pt-2">
+                  <p className="text-slate-500 mb-8 leading-relaxed">
+                    Add, edit, and manage shop products with images. Products appear instantly on the shop page.
+                  </p>
+
+                  <Link href="/admin/products">
+                    <ShinyButton className="w-full bg-green-500 text-white hover:bg-green-600 shadow-green-200 group-hover:translate-x-1 transition-all rounded-xl py-6">
+                      Manage Products <ArrowRight className="w-4 h-4 ml-2" />
+                    </ShinyButton>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Legacy Tally Import Card (Faded) */}
+            <div className="group relative opacity-70 hover:opacity-100 transition-opacity">
+              <Card className="relative h-full border-slate-100 bg-white rounded-[2rem] shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
+                <CardHeader className="p-8 pb-4">
+                  <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mb-6 text-slate-400 group-hover:scale-110 transition-transform duration-300">
+                    <Upload className="w-7 h-7" />
+                  </div>
+                  <CardTitle className="text-2xl font-bold text-slate-700">Legacy Tally Import</CardTitle>
+                </CardHeader>
+                <CardContent className="p-8 pt-2">
+                  <p className="text-slate-400 mb-8 leading-relaxed">
+                    Classic XML-based import for Tally Masters and Vouchers. Use this for specific accounting archival needs.
+                  </p>
+
+                  <div className="opacity-50 pointer-events-none">
+                    <ShinyButton variant="secondary" className="w-full bg-slate-100 text-slate-400 border-transparent rounded-xl py-6">
+                      Coming Soon
+                    </ShinyButton>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </Layout>
   );
 }
+

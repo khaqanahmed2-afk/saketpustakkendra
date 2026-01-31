@@ -1,196 +1,250 @@
 import { Layout } from "@/components/Layout";
 import { ShinyButton } from "@/components/ui/shiny-button";
-import { WaveSeparator } from "@/components/WaveSeparator";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { BookOpen, GraduationCap, PenTool, Award, Users, Building, ShoppingBag, Receipt, ArrowRight } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { BookOpen, GraduationCap, PenTool, Users, Building } from "lucide-react";
+import { products } from "@/data/products";
+import { ProductCard } from "@/components/ProductCard";
 
 export default function Home() {
+  const bestSellers = products.slice(0, 4);
+  const newArrivals = products.slice(4, 8);
+
   return (
     <Layout>
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center bg-cream overflow-hidden">
-        {/* Abstract Background Shapes */}
-        <div className="absolute inset-0 bg-wave-pattern opacity-40 pointer-events-none" />
-        <div className="absolute top-20 right-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
+      {/* 1. MINT HERO SECTION (Reference Match) */}
+      <section className="relative bg-[#a8d5c8] min-h-[500px] lg:min-h-[600px] flex items-center overflow-hidden">
+        {/* Decorative Doodles */}
+        <div className="absolute top-12 left-12 opacity-50 text-white transform -rotate-12">
+          <svg width="60" height="60" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2"><path d="M50 0 L61 35 L97 35 L68 57 L79 91 L50 69 L21 91 L32 57 L3 35 L39 35 Z" /></svg>
+        </div>
+        <div className="absolute bottom-12 right-1/3 opacity-50 text-white transform rotate-45">
+          <div className="w-4 h-4 rounded-full bg-white/40 mb-2"></div>
+          <div className="w-2 h-2 rounded-full bg-white/40 ml-4"></div>
+        </div>
 
         <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center lg:text-left"
+          {/* Left Text */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center lg:text-left text-white"
           >
-            <div className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary font-bold text-sm mb-6">
-              Serving Quality Since 1990
-            </div>
-            <h1 className="text-5xl lg:text-7xl font-display font-bold leading-tight text-foreground mb-6">
-              Elevate Your <br />
-              <span className="text-primary relative">
-                Learning Journey
-                <svg className="absolute w-full h-3 -bottom-1 left-0 text-primary opacity-30" viewBox="0 0 100 10" preserveAspectRatio="none">
-                  <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
-                </svg>
-              </span>
+            <p className="text-sm md:text-base font-medium tracking-widest uppercase mb-4 opacity-90">Inspired by Sakura</p>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-display font-bold leading-[1.1] mb-8">
+              Furukawashiko <br /> Flake Stickers
             </h1>
-            <p className="text-xl text-muted-foreground mb-8 max-w-lg mx-auto lg:mx-0 font-sans leading-relaxed">
-              Discover a curated collection of premium books, stationery, and art supplies.
-              Where quality meets creativity for students and professionals alike.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
-              <Link href="/login">
-                <ShinyButton className="w-full sm:w-auto h-14 text-lg">
-                  Customer Login
-                </ShinyButton>
-              </Link>
-              <ShinyButton variant="outline" className="w-full sm:w-auto h-14 text-lg border-2">
-                Visit Store
-              </ShinyButton>
-            </div>
+            <ShinyButton className="bg-[#fb923c] hover:bg-[#f97316] text-white px-8 py-3 h-auto rounded-full text-base font-bold shadow-none border-none">
+              Shop Now
+            </ShinyButton>
           </motion.div>
 
-          {/* Hero Image / Graphic */}
+          {/* Right Image Composition */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative"
+            className="relative hidden lg:block"
           >
-            <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white transform rotate-2 hover:rotate-0 transition-transform duration-500">
-              <img 
-                src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80" 
-                alt="Happy students with books" 
-                className="w-full h-[500px] object-cover"
+            {/* Main Circle BG */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-white/10 rounded-full blur-none" />
+
+            {/* Floating Sticker Packs (Mockup using Unsplash for now, simulating the reference) */}
+            <div className="relative z-10 transform rotate-3">
+              <img
+                src="https://images.unsplash.com/photo-1576502200272-341a4b8d5e0a?q=80&w=800&auto=format&fit=crop"
+                alt="Stationery Flake Stickers"
+                className="rounded-3xl shadow-xl w-[400px] mx-auto border-4 border-white/50"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-              <div className="absolute bottom-8 left-8 text-white text-left">
-                <p className="font-bold text-2xl font-display">Saket Pustak Kendra</p>
-                <p className="text-white/80">Serving Rudauli since 1990</p>
+              {/* Floating Elements mimicking the reference layout */}
+              <div className="absolute -top-10 -right-10 bg-white p-2 rounded-xl shadow-lg transform rotate-12">
+                <img src="https://images.unsplash.com/photo-1615486511269-e3e9d8e578fa?w=100" className="w-16 h-16 rounded-lg object-cover" />
+              </div>
+              <div className="absolute -bottom-5 -left-5 bg-white p-2 rounded-xl shadow-lg transform -rotate-6">
+                <img src="https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=100" className="w-16 h-16 rounded-lg object-cover" />
               </div>
             </div>
           </motion.div>
         </div>
-        
-        <WaveSeparator fill="#ffffff" />
       </section>
 
-      {/* Feature Icons Section */}
-      <section className="py-24 bg-white relative">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <FeatureCard 
-              icon={Award} 
-              title="Trusted Since 1990" 
-              desc="Legacy of quality." 
-              color="bg-blue-50 text-blue-600"
-            />
-            <FeatureCard 
-              icon={ShoppingBag} 
-              title="Wide Product Range" 
-              desc="Everything you need." 
-              color="bg-orange-50 text-orange-600"
-            />
-            <FeatureCard 
-              icon={Users} 
-              title="Student-Friendly" 
-              desc="Affordable pricing." 
-              color="bg-pink-50 text-pink-600"
-            />
-            <FeatureCard 
-              icon={Building} 
-              title="Institutional Supply" 
-              desc="Partner for schools." 
-              color="bg-purple-50 text-purple-600"
-            />
+      {/* 2. BEST SELLERS GRID */}
+      <section className="py-20 bg-cream">
+        <div className="container mx-auto px-4 pointer-events-none">
+          <div className="flex justify-between items-end mb-10 pointer-events-auto">
+            <div>
+              <h2 className="text-3xl font-display font-bold text-slate-800">Best Sellers</h2>
+              <div className="h-1 w-20 bg-primary/30 mt-2 rounded-full"></div>
+            </div>
+            <Link href="/shop" className="text-sm font-bold text-slate-500 hover:text-primary transition-colors cursor-pointer pointer-events-auto z-50">View all</Link>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pointer-events-auto">
+            {bestSellers.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Story Section */}
-      <section className="py-24 bg-orange-50/30 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-16 bg-white" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 0)" }}></div>
+      {/* 3. NEW ARRIVALS GRID */}
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-4xl font-display font-bold mb-6">Learn. Create. Succeed.</h2>
-            <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-              At Saket Pustak Kendra, we believe in building long-term relationships based on trust and consistency. 
-              We are not just a store; we are a partner in your educational journey.
+          <div className="flex justify-between items-end mb-10">
+            <div>
+              <h2 className="text-3xl font-display font-bold text-slate-800">New Arrival</h2>
+              <div className="h-1 w-20 bg-orange-200 mt-2 rounded-full"></div>
+            </div>
+            <Link href="/shop" className="text-sm font-bold text-slate-500 hover:text-primary transition-colors">View all</Link>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {newArrivals.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. SHOP BY BRANDS */}
+      <section className="py-16 bg-cream border-t border-slate-100">
+        <div className="container mx-auto px-4 text-center">
+          <h3 className="text-lg font-bold text-slate-400 uppercase tracking-widest mb-10">Shop By Brands</h3>
+          <div className="flex flex-wrap justify-center items-center gap-12 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+            <div className="flex items-center gap-2 font-display font-bold text-xl text-slate-700"><BookOpen className="w-8 h-8" /> BOOK SHOP</div>
+            <div className="flex items-center gap-2 font-display font-bold text-xl text-slate-700"><GraduationCap className="w-8 h-8" /> Education</div>
+            <div className="flex items-center gap-2 font-display font-bold text-xl text-slate-700"><Users className="w-8 h-8" /> KIDS EDU</div>
+            <div className="flex items-center gap-2 font-display font-bold text-xl text-slate-700"><PenTool className="w-8 h-8" /> STATIONERY</div>
+            <div className="flex items-center gap-2 font-display font-bold text-xl text-slate-700"><Building className="w-8 h-8" /> STATIONERY</div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. TESTIMONIAL */}
+      <section className="py-24 bg-white text-center">
+        <div className="container mx-auto px-4 max-w-2xl">
+          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Testimonial</h2>
+          <h3 className="text-3xl font-display font-bold text-slate-800 mb-8">What Our Customer Says</h3>
+
+          <div className="bg-[#fffbeb] p-8 rounded-[2rem] relative">
+            <div className="text-4xl text-orange-300 absolute -top-4 left-8">"</div>
+            <p className="text-slate-600 italic text-lg mb-6 leading-relaxed">
+              "Saket Bookshelf has totally transformed my study desk! The sticker packs and notebooks are so cute and high quality. Shipping was super fast too. Highly recommended for stationery lovers!"
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              {['School Books', 'Competitive Exams', 'Stationery', 'Art Supplies'].map((item) => (
-                <span key={item} className="px-4 py-2 bg-white rounded-full shadow-sm text-sm font-medium text-slate-700 border border-slate-100">
-                  {item}
-                </span>
-              ))}
+            <div className="flex items-center justify-center gap-4">
+              <div className="w-12 h-12 bg-slate-200 rounded-full overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" alt="Avatar" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-slate-800">Sarah Jenkins</p>
+                <p className="text-xs text-slate-500">Student</p>
+              </div>
             </div>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 w-full h-16 bg-white" style={{ clipPath: "polygon(0 100%, 100% 0, 100% 100%, 0 100%)" }}></div>
       </section>
 
-      {/* Stats Strip */}
-      <section className="py-12 bg-primary text-white">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-white/20">
-            <StatItem value="20k+" label="Happy Students" />
-            <StatItem value="35+" label="Years Experience" />
-            <StatItem value="5000+" label="Products" />
-            <StatItem value="50+" label="Institutions Served" />
+      {/* 6. SMART AI ORDER ASSISTANT (COMING SOON) - DEMO ONLY */}
+      <section className="py-16 md:py-24 bg-gradient-to-br from-primary/5 via-accent/5 to-secondary">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <div className="text-center mb-8">
+            <div className="inline-block bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full text-sm font-bold mb-4">
+              🚀 COMING SOON
+            </div>
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-800 mb-3">
+              Smart AI Order Assistant
+            </h2>
+            <p className="text-slate-600 text-base md:text-lg max-w-xl mx-auto">
+              Order your favorite stationery using natural language - just like chatting with a friend!
+            </p>
           </div>
-        </div>
-      </section>
 
-      {/* Product Categories */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Our Collections</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            <CategoryCard title="School Essentials" color="bg-blue-100 text-blue-800" />
-            <CategoryCard title="Office Stationery" color="bg-green-100 text-green-800" />
-            <CategoryCard title="Art & Craft" color="bg-pink-100 text-pink-800" />
-            <CategoryCard title="Exam Books" color="bg-purple-100 text-purple-800" />
-            <CategoryCard title="Eco-Friendly" color="bg-teal-100 text-teal-800" />
-          </div>
-        </div>
-      </section>
+          {/* Chat-style Demo Interface */}
+          <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-primary/10">
+            <div className="space-y-4 mb-6">
+              {/* Customer Message (Left) */}
+              <div className="flex justify-start">
+                <div className="bg-slate-100 rounded-2xl rounded-tl-sm px-5 py-3 max-w-[85%] md:max-w-[70%]">
+                  <p className="text-slate-800 text-base md:text-lg">
+                    "Natraj pencil ke 2 packet chahiye"
+                  </p>
+                </div>
+              </div>
 
-      {/* Customer Portal Intro */}
-      <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-12">
-            <div className="md:w-1/2">
-              <h2 className="text-4xl font-display font-bold mb-6">Already Our Customer?</h2>
-              <p className="text-slate-300 text-lg mb-8">
-                Access your digital ledger, download bills, and track your payments seamlessly through our customer portal.
+              {/* AI Response (Right) */}
+              <div className="flex justify-end">
+                <div className="bg-primary text-white rounded-2xl rounded-tr-sm px-5 py-4 max-w-[85%] md:max-w-[70%]">
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="text-lg">✔</span>
+                    <p className="font-bold text-base">Order Noted</p>
+                  </div>
+                  <div className="space-y-1 text-sm md:text-base pl-6">
+                    <p><span className="opacity-80">Item:</span> Natraj Pencil</p>
+                    <p><span className="opacity-80">Quantity:</span> 2 Packets</p>
+                    <p><span className="opacity-80">Status:</span> Will be sent to WhatsApp</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Demo Notice */}
+            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex items-start gap-3">
+              <span className="text-orange-500 text-xl flex-shrink-0">⚠</span>
+              <p className="text-orange-800 text-sm md:text-base leading-relaxed">
+                This is a demo preview only. AI ordering coming soon to make your shopping experience even easier!
               </p>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3">
-                  <div className="bg-primary rounded-full p-1"><Receipt className="w-4 h-4" /></div>
-                  <span>View detailed ledger</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="bg-primary rounded-full p-1"><ArrowRight className="w-4 h-4" /></div>
-                  <span>Download PDF bills instantly</span>
-                </li>
-              </ul>
-              <Link href="/login">
-                <ShinyButton className="h-14 px-8 text-lg bg-white text-slate-900 hover:bg-slate-100">
-                  Login with Mobile
-                </ShinyButton>
-              </Link>
             </div>
-            <div className="md:w-1/2">
-              <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20">
-                {/* Mock UI for dashboard preview */}
-                <div className="space-y-4">
-                  <div className="h-4 w-1/3 bg-white/20 rounded-full"></div>
-                  <div className="h-32 w-full bg-white/10 rounded-xl"></div>
-                  <div className="flex gap-4">
-                    <div className="h-12 w-1/2 bg-primary rounded-lg"></div>
-                    <div className="h-12 w-1/2 bg-white/20 rounded-lg"></div>
+          </div>
+        </div>
+      </section>
+
+      {/* 7. ALREADY OUR CUSTOMER? - LOGIN CTA */}
+      <section className="py-16 md:py-24 bg-white">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-3xl p-8 md:p-12 border border-primary/20 shadow-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+              {/* Left Content */}
+              <div className="text-center md:text-left">
+                <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-800 mb-4">
+                  Already Our Customer?
+                </h2>
+                <p className="text-slate-600 text-base md:text-lg leading-relaxed mb-6">
+                  Access your digital ledger, download bills, and track your payments seamlessly through our customer portal.
+                </p>
+
+                {/* Features List */}
+                <div className="space-y-3 mb-8">
+                  <div className="flex items-center gap-3 justify-center md:justify-start">
+                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-primary text-sm">✓</span>
+                    </div>
+                    <p className="text-slate-700 font-medium">View detailed ledger</p>
+                  </div>
+                  <div className="flex items-center gap-3 justify-center md:justify-start">
+                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-primary text-sm">✓</span>
+                    </div>
+                    <p className="text-slate-700 font-medium">Download PDF bills instantly</p>
+                  </div>
+                </div>
+
+                {/* CTA Button */}
+                <Link href="/login">
+                  <ShinyButton className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white px-8 py-4 h-auto rounded-2xl text-lg font-bold shadow-lg shadow-primary/20 border-none">
+                    Login with Mobile
+                  </ShinyButton>
+                </Link>
+              </div>
+
+              {/* Right Visual */}
+              <div className="hidden md:flex items-center justify-center">
+                <div className="relative">
+                  <div className="w-48 h-48 bg-white rounded-3xl shadow-xl flex items-center justify-center transform rotate-6">
+                    <BookOpen className="w-20 h-20 text-primary" />
+                  </div>
+                  <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-accent/20 rounded-2xl shadow-lg flex items-center justify-center transform -rotate-12">
+                    <PenTool className="w-12 h-12 text-accent" />
                   </div>
                 </div>
               </div>
@@ -199,72 +253,172 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-24 bg-cream/50">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Trusted by the Community</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <TestimonialCard 
-              text="Saket Pustak Kendra has been my go-to store since my school days. Now I buy books for my children here." 
-              author="Amit Kumar" 
-              role="Parent" 
-            />
-            <TestimonialCard 
-              text="The quality of stationery and their service is unmatched in Rudauli. Highly recommended!" 
-              author="Priya Singh" 
-              role="Teacher" 
-            />
-            <TestimonialCard 
-              text="Their institutional supply service is prompt and professional. Very reliable partners." 
-              author="Principal" 
-              role="Local School" 
-            />
+      {/* 8. WHY CHOOSE SAKET PUSTAK KENDRA */}
+      <section className="py-16 md:py-24 bg-cream">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-800 mb-3">
+              Why Choose Saket Pustak Kendra
+            </h2>
+            <div className="h-1 w-24 bg-primary/30 mt-3 rounded-full mx-auto"></div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+            {/* Trust Point 1 */}
+            <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row items-start gap-4">
+                <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <Building className="w-7 h-7 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-slate-800 mb-2">Trusted Since 1990</h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    Serving quality education for over 30 years with dedication and trust
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Trust Point 2 */}
+            <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row items-start gap-4">
+                <div className="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <BookOpen className="w-7 h-7 text-accent" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-slate-800 mb-2">Genuine Products</h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    100% authentic books and stationery from trusted brands
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Trust Point 3 */}
+            <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row items-start gap-4">
+                <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-2xl">💰</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-slate-800 mb-2">Affordable Pricing</h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    Best prices for students and competitive exam aspirants
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Trust Point 4 */}
+            <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row items-start gap-4">
+                <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-2xl">📍</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-slate-800 mb-2">Local & Trusted</h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    Your neighborhood shop in Rudauli & Ayodhya
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
+
+      {/* 9. SHOP BY CATEGORY */}
+      <section className="py-16 md:py-24 bg-white">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-800 mb-3">
+              Shop by Category
+            </h2>
+            <p className="text-slate-600 text-base md:text-lg max-w-2xl mx-auto">
+              Find exactly what you need for your educational journey
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {/* Category 1: School Books */}
+            <Link href="/shop">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 md:p-8 text-center hover:shadow-lg transition-all cursor-pointer group">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <BookOpen className="w-8 h-8 md:w-10 md:h-10 text-blue-500" />
+                </div>
+                <h3 className="font-bold text-slate-800 text-base md:text-lg mb-1">School Books</h3>
+                <p className="text-sm text-slate-600">All classes</p>
+              </div>
+            </Link>
+
+            {/* Category 2: Competitive Exam Books */}
+            <Link href="/shop">
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 md:p-8 text-center hover:shadow-lg transition-all cursor-pointer group">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <GraduationCap className="w-8 h-8 md:w-10 md:h-10 text-purple-500" />
+                </div>
+                <h3 className="font-bold text-slate-800 text-base md:text-lg mb-1">Competitive Exams</h3>
+                <p className="text-sm text-slate-600">UPSC, SSC, Railway</p>
+              </div>
+            </Link>
+
+            {/* Category 3: Stationery */}
+            <Link href="/shop">
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-6 md:p-8 text-center hover:shadow-lg transition-all cursor-pointer group">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <PenTool className="w-8 h-8 md:w-10 md:h-10 text-orange-500" />
+                </div>
+                <h3 className="font-bold text-slate-800 text-base md:text-lg mb-1">Stationery</h3>
+                <p className="text-sm text-slate-600">Pens, pencils & more</p>
+              </div>
+            </Link>
+
+            {/* Category 4: Kids Education */}
+            <Link href="/shop">
+              <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-2xl p-6 md:p-8 text-center hover:shadow-lg transition-all cursor-pointer group">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Users className="w-8 h-8 md:w-10 md:h-10 text-pink-500" />
+                </div>
+                <h3 className="font-bold text-slate-800 text-base md:text-lg mb-1">Kids Education</h3>
+                <p className="text-sm text-slate-600">Activity books</p>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 10. FINAL CALL TO ACTION */}
+      <section className="py-16 md:py-24 bg-gradient-to-br from-primary via-primary/90 to-accent">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="text-center text-white">
+            <h2 className="text-3xl md:text-5xl font-display font-bold mb-4 md:mb-6">
+              Your Trusted Book & Stationery Partner
+            </h2>
+            <p className="text-lg md:text-xl mb-8 md:mb-10 opacity-90 leading-relaxed max-w-2xl mx-auto">
+              Order books and stationery easily from Saket Pustak Kendra. Quality products, trusted service since 1990.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link href="/shop">
+                <ShinyButton className="w-full sm:w-auto bg-white hover:bg-white/90 text-primary px-8 py-4 h-auto rounded-2xl text-lg font-bold shadow-xl border-none">
+                  Shop Now
+                </ShinyButton>
+              </Link>
+              <Link href="/login">
+                <button className="w-full sm:w-auto bg-transparent border-2 border-white text-white hover:bg-white/10 px-8 py-4 rounded-2xl text-lg font-bold transition-all">
+                  Login with Mobile
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </Layout>
   );
+
+
 }
 
-function FeatureCard({ icon: Icon, title, desc, color }: { icon: any, title: string, desc: string, color: string }) {
-  return (
-    <div className="group p-6 rounded-3xl border border-slate-100 hover:border-slate-200 bg-white hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-center">
-      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 mx-auto ${color} transition-transform group-hover:scale-110 duration-300`}>
-        <Icon className="w-7 h-7" />
-      </div>
-      <h3 className="text-lg font-bold mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground">{desc}</p>
-    </div>
-  );
-}
 
-function StatItem({ value, label }: { value: string, label: string }) {
-  return (
-    <div>
-      <div className="text-4xl font-bold mb-2">{value}</div>
-      <div className="text-sm opacity-80 uppercase tracking-wide">{label}</div>
-    </div>
-  );
-}
-
-function CategoryCard({ title, color }: { title: string, color: string }) {
-  return (
-    <div className={`${color} p-6 rounded-2xl text-center font-bold hover:shadow-lg cursor-pointer transition-all hover:scale-105`}>
-      {title}
-    </div>
-  );
-}
-
-function TestimonialCard({ text, author, role }: { text: string, author: string, role: string }) {
-  return (
-    <Card className="border-none shadow-md">
-      <CardContent className="p-8">
-        <p className="text-muted-foreground italic mb-6">"{text}"</p>
-        <div>
-          <p className="font-bold">{author}</p>
-          <p className="text-xs text-muted-foreground">{role}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}

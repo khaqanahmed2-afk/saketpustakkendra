@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Soft Pastel Mint Primary */
+    --primary: 160 60% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Warm Cream Secondary */
+    --secondary: 40 50% 98%;
+    --secondary-foreground: 220 20% 25%;
+
+    /* Creamy/Yellowish background for paper feel */
+    --background: 40 50% 98%;
+    --foreground: 220 20% 25%;
+
+    /* Clean White Cards */
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 25%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 25%;
+
+    /* Very Soft Gray Muted */
+    --muted: 40 30% 90%;
+    --muted-foreground: 215 16% 47%;
+
+    /* Soft Pink Accent */
+    --accent: 340 90% 85%;
+    --accent-foreground: 340 40% 30%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 20% 90%;
+    --input: 214 20% 90%;
+    --ring: 160 60% 45%;
+    --radius: 1rem;
+
+    --font-sans: 'Outfit', sans-serif;
+    --font-display: 'Quicksand', sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary) / 0.3);
+    color: hsl(var(--primary-foreground));
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    @apply font-bold tracking-tight text-foreground;
+  }
+
+  /* Hide scrollbar for cleaner look in horizontal lists */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

@@ -1,24 +1,116 @@
-import { useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { useAuth } from "@/hooks/use-auth";
 import { useDashboardData } from "@/hooks/use-dashboard";
 import { StatCard } from "@/components/StatCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useLocation } from "wouter";
-import { Wallet, ShoppingCart, Receipt, ArrowDownToLine, Loader2, Calendar, Lock } from "lucide-react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { format } from "date-fns";
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  AreaChart, Area
-} from 'recharts';
+import { Wallet, ShoppingCart, Receipt, Calendar, Lock, LogOut, FileText, Download, TrendingUp, TrendingDown, ArrowUpRight, Search, Filter } from "lucide-react";
+import { format, subMonths, startOfYear, endOfYear, isWithinInterval, parseISO } from "date-fns";
+import { DashboardCharts } from "@/components/DashboardCharts";
+import { LedgerTable } from "@/components/LedgerTable";
+import { SkeletonLoader } from "@/components/LoadingStates";
+import { motion, AnimatePresence } from "framer-motion";
+import { AccountInfoCard } from "@/components/dashboard/AccountInfoCard";
+import { generatePDFStatement, generateExcelStatement } from "@/utils/statement-generator";
+import { ShinyButton } from "@/components/ui/shiny-button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard() {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const [, setLocation] = useLocation();
-  const { customer, ledger, bills, payments, summary, isLoading } = useDashboardData();
+  const { customer, ledger, bills, invoices, payments, summary, monthly, isLoading } = useDashboardData();
+
+  const [viewMode, setViewMode] = useState<"monthly" | "yearly">("yearly"); // Default to yearly for broader view
+  const [invoiceSearch, setInvoiceSearch] = useState("");
+
+  // Calculate Balances & Filter Data based on View Mode
+  const filteredData = useMemo(() => {
+    const now = new Date();
+    let startDate = startOfYear(now);
+    let endDate = endOfYear(now);
+
+    if (viewMode === "monthly") {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+
+    // fallback if ledger not available, use invoices/payments directly
+    const hasLedger = ledger && ledger.length > 0;
+
+    if (!hasLedger) {
+      // Fallback Calculation from Invoices/Payments
+      const validInvoices = (invoices || []).filter((inv: any) => {
+        const d = new Date(inv.date || inv.billDate || inv.bill_date);
+        return isWithinInterval(d, { start: startDate, end: endDate });
+      });
+      const validPayments = (payments || []).filter((pay: any) => {
+        const d = new Date(pay.paymentDate || pay.payment_date);
+        return isWithinInterval(d, { start: startDate, end: endDate });
+      });
+
+      const purchases = validInvoices.reduce((sum: number, inv: any) => sum + Number(inv.totalAmount || inv.total_amount || inv.amount || 0), 0);
+      const paid = validPayments.reduce((sum: number, pay: any) => sum + Number(pay.amount || 0), 0);
+
+      return {
+        ledger: [],
+        purchases,
+        paid,
+        opening: 0,
+        closing: purchases - paid // simplified implies starting from 0 if no ledger
+      };
+    }
+
+    // Main Ledger Calculation
+    const filteredLedger = ledger.filter((item: any) => {
+      const date = new Date(item.entryDate);
+      return isWithinInterval(date, { start: startDate, end: endDate });
+    });
+
+    // Opening Balance
+    const lastPrevEntry = ledger.find((item: any) => new Date(item.entryDate) < startDate);
+    const openingBalance = lastPrevEntry ? Number(lastPrevEntry.balance) : 0;
+
+    const purchases = filteredLedger.reduce((sum: number, item: any) => sum + Number(item.debit || 0), 0);
+    const paid = filteredLedger.reduce((sum: number, item: any) => sum + Number(item.credit || 0), 0);
+
+    // Closing Balance Calculation (Strict Formula)
+    const closingBalance = openingBalance + purchases - paid;
+
+    return {
+      ledger: filteredLedger,
+      purchases,
+      paid,
+      opening: openingBalance,
+      closing: closingBalance
+    };
+  }, [ledger, invoices, payments, viewMode]);
+
+  // Invoice / Bill Merging Logic
+  const displayInvoices = useMemo(() => {
+    // Prefer 'invoices' table, allow search
+    let data = (invoices && invoices.length > 0) ? invoices : (bills || []);
+
+    // Filter
+    if (invoiceSearch) {
+      const term = invoiceSearch.trim().toLowerCase();
+      data = data.filter((inv: any) => {
+        // Safe Access: check all possible key variations
+        const invNo = String(inv.invoiceNo ?? inv.invoice_no ?? inv.billNo ?? inv.bill_no ?? "").toLowerCase();
+        const amt = String(inv.amount ?? inv.totalAmount ?? inv.total_amount ?? 0);
+
+        return invNo.includes(term) || amt.includes(term);
+      });
+    }
+    return data;
+  }, [invoices, bills, invoiceSearch]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -29,8 +121,8 @@ export default function Dashboard() {
   if (loading || isLoading) {
     return (
       <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <div className="container mx-auto px-4 py-12">
+          <SkeletonLoader />
         </div>
       </Layout>
     );
@@ -38,342 +130,226 @@ export default function Dashboard() {
 
   if (!user) return null;
 
-  const downloadBillPDF = (bill: any) => {
-    const doc = new jsPDF();
-    
-    // Header
-    doc.setFontSize(22);
-    doc.text("Saket Pustak Kendra", 105, 20, { align: "center" });
-    
-    doc.setFontSize(12);
-    doc.text("Main Market, Rudauli, Ayodhya", 105, 30, { align: "center" });
-    doc.text("Bill Receipt", 105, 40, { align: "center" });
-    
-    // Details
-    doc.setFontSize(10);
-    doc.text(`Bill No: ${bill.billNo}`, 14, 55);
-    doc.text(`Date: ${format(new Date(bill.billDate), 'dd MMM yyyy')}`, 14, 60);
-    doc.text(`Customer: ${customer?.name}`, 14, 65);
-    
-    // Line
-    doc.setLineWidth(0.5);
-    doc.line(14, 70, 196, 70);
-    
-    // Content (Mocked items since schema doesn't have bill items, just total)
-    // In real app, fetch bill items
-    const tableData = [
-      ["Total Amount", `₹${bill.amount}`]
-    ];
-    
-    autoTable(doc, {
-      startY: 75,
-      head: [['Description', 'Amount']],
-      body: tableData,
-      theme: 'grid',
-    });
-    
-    // Footer
-    doc.text("Thank you for your business!", 105, doc.lastAutoTable?.finalY + 20 || 150, { align: "center" });
-    
-    doc.save(`Bill_${bill.billNo}.pdf`);
-  };
+  // Invoice / Bill Merging Logic
 
-  /**
-   * Aggregates ledger data by month for Recharts
-   */
-  const getChartData = () => {
-    if (!ledger) return [];
-    
-    const monthlyData: Record<string, { month: string; purchase: number; paid: number; balance: number }> = {};
-    
-    // Sort ledger by date ascending for trend
-    const sortedLedger = [...ledger].sort((a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime());
-    
-    sortedLedger.forEach(entry => {
-      const date = new Date(entry.entryDate);
-      const monthKey = format(date, 'MMM yyyy');
-      
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { month: monthKey, purchase: 0, paid: 0, balance: 0 };
-      }
-      
-      monthlyData[monthKey].purchase += Number(entry.debit);
-      monthlyData[monthKey].paid += Number(entry.credit);
-      monthlyData[monthKey].balance = Number(entry.balance);
-    });
-    
-    return Object.values(monthlyData);
-  };
 
-  const chartData = getChartData();
 
   return (
     <Layout>
-      <div className="bg-slate-50 min-h-screen pb-20">
-        <div className="bg-primary/5 pb-20 pt-10 px-4">
+      <div className="bg-secondary/30 min-h-screen pb-20 overflow-x-hidden">
+
+        {/* Top Header & Account Info - PASTEL THEME */}
+        <div className="bg-gradient-to-r from-primary/10 via-secondary to-accent/10 pt-10 pb-20 px-4 border-b border-primary/5">
           <div className="container mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-display font-bold mb-2">Hello, {customer?.name || "Customer"}!</h1>
-                <p className="text-muted-foreground">Here is your financial overview.</p>
+            <div className="flex flex-col lg:flex-row justify-between gap-6">
+              <div className="space-y-2">
+                <h1 className="text-4xl font-display font-bold text-slate-800">
+                  Welcome, <span className="text-primary">{customer?.name?.split(' ')[0]}</span>
+                </h1>
+                <p className="text-slate-500 font-medium">Here is your financial overview.</p>
               </div>
-              <button 
-                onClick={() => setLocation("/change-pin")}
-                className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:bg-primary/5 px-4 py-2 rounded-xl transition-colors border border-primary/20 bg-white"
-              >
-                <Lock className="w-4 h-4" />
-                Change PIN
-              </button>
+
+              <div className="flex gap-3">
+                <ShinyButton onClick={() => generatePDFStatement({
+                  customer,
+                  ledger: filteredData.ledger,
+                  openingBalance: filteredData.opening,
+                  closingBalance: filteredData.closing
+                })} className="bg-white border-primary/20 text-slate-700 hover:bg-primary/5 shadow-sm">
+                  <Download className="w-4 h-4 mr-2 text-primary" /> Statement (PDF)
+                </ShinyButton>
+                <ShinyButton onClick={() => generateExcelStatement({
+                  customer,
+                  ledger: filteredData.ledger,
+                  openingBalance: filteredData.opening,
+                  closingBalance: filteredData.closing
+                })} className="bg-white border-primary/20 text-slate-700 hover:bg-primary/5 shadow-sm">
+                  <FileText className="w-4 h-4 mr-2 text-green-600" /> Excel
+                </ShinyButton>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="container mx-auto px-4 -mt-10">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <StatCard 
-              title="Total Purchase" 
-              value={`₹${summary.totalPurchases.toLocaleString()}`} 
-              icon={ShoppingCart} 
-              color="orange" 
-              delay={0} 
-            />
-            <StatCard 
-              title="Total Paid" 
-              value={`₹${summary.totalPaid.toLocaleString()}`} 
-              icon={Wallet} 
-              color="green" 
-              delay={100} 
-            />
-            <StatCard 
-              title="Pending Balance" 
-              value={`₹${summary.currentBalance.toLocaleString()}`} 
-              icon={Receipt} 
-              color="blue" 
-              delay={200} 
-            />
-          </div>
+        <div className="container mx-auto px-4 -mt-12">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-          {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <Card className="rounded-3xl border-none shadow-md overflow-hidden bg-white">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5 text-orange-500" />
-                  Monthly Purchases
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-[300px] pt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                      cursor={{ fill: '#f8fafc' }}
-                    />
-                    <Bar dataKey="purchase" fill="#f97316" radius={[4, 4, 0, 0]} barSize={30} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            {/* Left Sidebar: Account Info */}
+            <div className="lg:col-span-1 space-y-6">
+              <AccountInfoCard customer={customer} />
 
-            <Card className="rounded-3xl border-none shadow-md overflow-hidden bg-white">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Wallet className="w-5 h-5 text-green-500" />
-                  Monthly Payments
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-[300px] pt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="colorPaid" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                    />
-                    <Area type="monotone" dataKey="paid" stroke="#22c55e" fillOpacity={1} fill="url(#colorPaid)" strokeWidth={3} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Content Tabs */}
-          <Tabs defaultValue="ledger" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8 h-14 bg-white shadow-sm rounded-2xl p-1.5 overflow-x-auto">
-              <TabsTrigger value="ledger" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white font-medium whitespace-nowrap">Ledger</TabsTrigger>
-              <TabsTrigger value="bills" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white font-medium whitespace-nowrap">Bills</TabsTrigger>
-              <TabsTrigger value="payments" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white font-medium whitespace-nowrap">Payments</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="ledger" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <Card className="border-none shadow-md rounded-3xl overflow-hidden">
-                <CardHeader className="bg-white border-b border-slate-100">
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <Receipt className="w-5 h-5 text-primary" />
-                    Transaction History
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    {/* Desktop Table View */}
-                    <table className="hidden md:table w-full text-sm text-left">
-                      <thead className="bg-slate-50 text-muted-foreground font-medium uppercase text-xs">
-                        <tr>
-                          <th className="px-6 py-4">Date</th>
-                          <th className="px-6 py-4">Voucher No</th>
-                          <th className="px-6 py-4 text-right text-orange-600">Debit</th>
-                          <th className="px-6 py-4 text-right text-green-600">Credit</th>
-                          <th className="px-6 py-4 text-right">Balance</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 bg-white">
-                        {ledger?.map((entry) => (
-                          <tr key={entry.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-6 py-4 font-medium">{format(new Date(entry.entryDate), 'dd MMM yyyy')}</td>
-                            <td className="px-6 py-4 text-muted-foreground">{entry.voucherNo || "-"}</td>
-                            <td className="px-6 py-4 text-right text-orange-600 font-medium">
-                              {Number(entry.debit) > 0 ? `₹${Number(entry.debit).toLocaleString()}` : "-"}
-                            </td>
-                            <td className="px-6 py-4 text-right text-green-600 font-medium">
-                              {Number(entry.credit) > 0 ? `₹${Number(entry.credit).toLocaleString()}` : "-"}
-                            </td>
-                            <td className="px-6 py-4 text-right font-bold text-slate-700">
-                              ₹{Number(entry.balance).toLocaleString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-
-                    {/* Mobile Card View */}
-                    <div className="md:hidden divide-y divide-slate-100 bg-white">
-                      {ledger?.map((entry) => (
-                        <div key={entry.id} className="p-4 space-y-3">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-bold text-slate-800">{format(new Date(entry.entryDate), 'dd MMM yyyy')}</p>
-                              <p className="text-xs text-muted-foreground">{entry.voucherNo || "No Voucher"}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-bold text-slate-700">₹{Number(entry.balance).toLocaleString()}</p>
-                              <p className="text-[10px] uppercase text-muted-foreground">Balance</p>
-                            </div>
-                          </div>
-                          <div className="flex justify-between gap-4 pt-1">
-                            <div className="flex-1 bg-orange-50 p-2 rounded-lg border border-orange-100">
-                              <p className="text-[10px] uppercase text-orange-600 font-bold mb-0.5">Debit</p>
-                              <p className="text-sm font-bold text-orange-700">
-                                {Number(entry.debit) > 0 ? `₹${Number(entry.debit).toLocaleString()}` : "-"}
-                              </p>
-                            </div>
-                            <div className="flex-1 bg-green-50 p-2 rounded-lg border border-green-100">
-                              <p className="text-[10px] uppercase text-green-600 font-bold mb-0.5">Credit</p>
-                              <p className="text-sm font-bold text-green-700">
-                                {Number(entry.credit) > 0 ? `₹${Number(entry.credit).toLocaleString()}` : "-"}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {(!ledger || ledger.length === 0) && (
-                      <div className="px-6 py-12 text-center text-muted-foreground">No transactions found</div>
-                    )}
-                  </div>
+              {/* Quick Actions */}
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  <button onClick={() => setLocation("/change-pin")} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-secondary transition-colors text-slate-600 font-medium text-sm border border-transparent hover:border-primary/10">
+                    <span className="flex items-center gap-2"><Lock className="w-4 h-4 text-primary" /> Change PIN</span>
+                    <ArrowUpRight className="w-4 h-4 text-slate-400" />
+                  </button>
+                  <button onClick={() => signOut()} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-red-50 transition-colors text-red-500 font-medium text-sm border border-transparent hover:border-red-100">
+                    <span className="flex items-center gap-2"><LogOut className="w-4 h-4" /> Sign Out</span>
+                  </button>
                 </CardContent>
               </Card>
-            </TabsContent>
+            </div>
 
-            <TabsContent value="bills" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {bills?.map((bill) => (
-                  <Card key={bill.id} className="rounded-3xl border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <div className="bg-orange-100 p-2 rounded-xl text-orange-600">
-                        <Receipt className="w-5 h-5" />
+            {/* Right Content: Summary & Tabs */}
+            <div className="lg:col-span-3 space-y-8">
+
+              {/* View Toggle */}
+              <div className="flex justify-end">
+                <div className="bg-white p-1 rounded-2xl shadow-sm border border-primary/10 inline-flex">
+                  <button
+                    onClick={() => setViewMode("monthly")}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${viewMode === 'monthly' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-slate-500 hover:bg-secondary'}`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    onClick={() => setViewMode("yearly")}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${viewMode === 'yearly' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-slate-500 hover:bg-secondary'}`}
+                  >
+                    Yearly
+                  </button>
+                </div>
+              </div>
+
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <StatCard
+                  title="Opening Balance"
+                  value={`₹${filteredData.opening.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+                  icon={Calendar}
+                  color="slate"
+                  delay={0}
+                />
+                <StatCard
+                  title="Total Purchase"
+                  value={`₹${filteredData.purchases.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+                  icon={TrendingUp}
+                  color="orange"
+                  delay={100}
+                />
+                <StatCard
+                  title="Total Paid"
+                  value={`₹${filteredData.paid.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+                  icon={TrendingDown}
+                  color="teal"
+                  delay={200}
+                />
+                <StatCard
+                  title="Closing Balance"
+                  value={`₹${filteredData.closing.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+                  icon={Wallet}
+                  color={filteredData.closing > 0 ? 'red' : 'green'}
+                  delay={300}
+                />
+              </div>
+
+              {/* Charts */}
+              <div className="grid grid-cols-1 gap-6">
+                <DashboardCharts data={monthly} type="purchase" />
+              </div>
+
+              {/* Main Tabs */}
+              <Tabs defaultValue="invoices" className="w-full">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+                  <TabsList className="bg-white p-1.5 h-auto rounded-2xl border border-primary/10 shadow-sm w-full sm:w-auto grid grid-cols-3">
+                    <TabsTrigger value="invoices" className="rounded-xl py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white transition-all">Invoices</TabsTrigger>
+                    <TabsTrigger value="payments" className="rounded-xl py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white transition-all">Payments</TabsTrigger>
+                    <TabsTrigger value="ledger" className="rounded-xl py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white transition-all">Ledger</TabsTrigger>
+                  </TabsList>
+
+                  {/* Search for Invoices */}
+                  <div className="relative w-full sm:w-auto">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      placeholder="Search invoices..."
+                      className="pl-9 w-full sm:w-64 bg-white border-primary/10 rounded-xl focus:ring-primary/20"
+                      value={invoiceSearch}
+                      onChange={(e) => setInvoiceSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <TabsContent value="invoices" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {displayInvoices.map((inv: any, idx: number) => {
+                      // Fix: Handle mismatched keys (snake_case vs camelCase) safely
+                      const amount = Number(inv.amount || inv.totalAmount || inv.total_amount || 0);
+                      const date = inv.date || inv.billDate || inv.bill_date;
+                      // Fallback: invoiceNo (frontend) -> invoice_no (db) -> billNo (frontend) -> bill_no (db)
+                      const number = inv.invoiceNo || inv.invoice_no || inv.billNo || inv.bill_no || "N/A";
+                      const status = inv.status || ((idx === 0 && summary.currentBalance > 0) ? 'pending' : 'paid'); // Dummy status logic fallback
+
+                      return (
+                        <Card key={idx} className="border-primary/5 shadow-sm hover:shadow-lg hover:shadow-primary/5 transition-all group cursor-pointer bg-white rounded-[1.5rem] overflow-hidden">
+                          <CardContent className="p-5 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className={`p-3 rounded-2xl ${status === 'pending' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'}`}>
+                                <FileText className="w-6 h-6" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-800">#{number}</p>
+                                <p className="text-sm text-slate-500">{format(new Date(date), 'dd MMM yyyy')}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-lg text-slate-800">₹{amount.toLocaleString()}</p>
+                              <Badge variant={status === 'paid' ? 'default' : 'destructive'} className="capitalize mt-1 rounded-lg">
+                                {status || 'Unknown'}
+                              </Badge>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                    {displayInvoices.length === 0 && (
+                      <div className="col-span-full py-12 text-center text-slate-400 bg-white rounded-[2rem] border border-dashed border-primary/10">
+                        No invoices found
                       </div>
-                      <span className="text-sm font-medium text-muted-foreground">{format(new Date(bill.billDate), 'dd MMM yyyy')}</span>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="mb-4">
-                        <p className="text-sm text-muted-foreground">Bill No</p>
-                        <p className="text-lg font-bold">#{bill.billNo}</p>
-                      </div>
-                      <div className="flex items-center justify-between mt-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Amount</p>
-                          <p className="text-2xl font-display font-bold text-slate-800">₹{Number(bill.amount).toLocaleString()}</p>
-                        </div>
-                        <button 
-                          onClick={() => downloadBillPDF(bill)}
-                          className="flex items-center gap-2 text-sm font-medium text-primary hover:bg-primary/5 px-3 py-2 rounded-lg transition-colors"
-                        >
-                          <ArrowDownToLine className="w-4 h-4" />
-                          PDF
-                        </button>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="payments">
+                  <Card className="border-none shadow-sm rounded-[2rem] overflow-hidden bg-white">
+                    <CardContent className="p-0">
+                      <div className="divide-y divide-primary/5">
+                        {payments?.map((payment: any) => (
+                          <div key={payment.id} className="flex items-center justify-between p-6 hover:bg-secondary/30 transition-colors">
+                            <div className="flex items-center gap-4">
+                              <div className="bg-primary/10 p-3 rounded-2xl text-primary">
+                                <Wallet className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-800">{payment.mode}</p>
+                                <p className="text-sm text-slate-500 mr-2">
+                                  {format(new Date(payment.paymentDate), 'dd MMM yyyy')} • Ref: {payment.referenceNo || "N/A"}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-primary">+₹{Number(payment.amount).toLocaleString()}</p>
+                              <p className="text-xs text-primary/70 font-medium bg-primary/5 px-2 py-0.5 rounded-full inline-block mt-1">
+                                Received
+                              </p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </CardContent>
                   </Card>
-                ))}
-                {(!bills || bills.length === 0) && (
-                  <div className="col-span-full text-center py-12 text-muted-foreground">No bills found</div>
-                )}
-              </div>
-            </TabsContent>
+                </TabsContent>
 
-            <TabsContent value="payments" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <Card className="border-none shadow-md rounded-3xl overflow-hidden">
-                <CardHeader className="bg-white border-b border-slate-100">
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <Wallet className="w-5 h-5 text-green-600" />
-                    Payment History
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="divide-y divide-slate-100">
-                    {payments?.map((payment) => (
-                      <div key={payment.id} className="flex items-center justify-between p-6 hover:bg-slate-50 transition-colors">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-green-100 p-3 rounded-2xl text-green-600">
-                            <Calendar className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-slate-800">{payment.mode}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {format(new Date(payment.paymentDate), 'dd MMM yyyy')} • Ref: {payment.referenceNo || "N/A"}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-green-600">+₹{Number(payment.amount).toLocaleString()}</p>
-                          <p className="text-xs text-green-600/70 font-medium bg-green-50 px-2 py-0.5 rounded-full inline-block mt-1">
-                            Received
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                    {(!payments || payments.length === 0) && (
-                      <div className="p-12 text-center text-muted-foreground">No payments found</div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                <TabsContent value="ledger">
+                  <LedgerTable data={ledger} />
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>
   );
 }
+

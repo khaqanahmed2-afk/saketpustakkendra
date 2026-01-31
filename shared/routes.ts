@@ -46,7 +46,6 @@ export const api = {
       method: "POST" as const,
       path: "/api/auth/change-pin",
       input: z.object({
-        mobile: z.string(),
         oldPin: z.string().length(4),
         newPin: z.string().length(4),
       }),
@@ -67,8 +66,15 @@ export const api = {
         200: z.object({
           message: z.string(),
           stats: z.object({
+            total: z.number(),
             processed: z.number(),
+            skippedInvalid: z.number(),
+            duplicates: z.number(),
             errors: z.number(),
+          }),
+          issues: z.object({
+            validation: z.array(z.any()),
+            rowErrors: z.array(z.any()),
           }),
         }),
         400: z.object({ message: z.string() }),

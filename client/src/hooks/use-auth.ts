@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { api } from "@shared/routes";
+import { api } from "@/services/api";
 
 export function useAuth() {
   const [user, setUser] = useState<any>(null);
@@ -9,39 +9,46 @@ export function useAuth() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
+  // Check backend session on mount
   useEffect(() => {
-    const saved = localStorage.getItem("auth_session");
-    if (saved) {
-      setUser(JSON.parse(saved));
-    }
-    setLoading(false);
+    const checkSession = async () => {
+      try {
+        const data = await api.auth.me();
+        setUser(data.user || null);
+      } catch (error) {
+        console.error("Session check failed:", error);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkSession();
   }, []);
 
   const checkMobile = async (mobile: string) => {
-    const res = await fetch(api.auth.checkMobile.path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mobile }),
-    });
-    const data = await res.json();
-    return data.exists;
+    try {
+      const data = await api.auth.checkMobile(mobile);
+      return data.exists;
+    } catch {
+      return false;
+    }
   };
 
   const setupPin = async (mobile: string, pin: string) => {
     try {
-      const res = await fetch(api.auth.setupPin.path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mobile, pin }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        localStorage.setItem("auth_session", JSON.stringify(data.session));
-        setUser(data.session);
-        setLocation("/dashboard");
+      const data = await api.auth.setupPin(mobile, pin);
+      if (data.success) {
+        // Wait for session to settle
+        await new Promise(r => setTimeout(r, 200));
+        const meData = await api.auth.me();
+        const authenticatedUser = meData.user || data.session;
+
+        setUser(authenticatedUser);
+        const redirectPath = (authenticatedUser as any)?.role === 'admin' ? '/admin' : '/dashboard';
+        setLocation(redirectPath);
         return true;
       }
-      throw new Error(data.message);
+      return false;
     } catch (e: any) {
       toast({ title: "Setup Failed", description: e.message, variant: "destructive" });
       return false;
@@ -50,29 +57,48 @@ export function useAuth() {
 
   const loginWithPin = async (mobile: string, pin: string) => {
     try {
-      const res = await fetch(api.auth.loginPin.path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mobile, pin }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        localStorage.setItem("auth_session", JSON.stringify(data.session));
-        setUser(data.session);
-        setLocation("/dashboard");
+      const data = await api.auth.loginPin(mobile, pin);
+      if (data.success) {
+        // Wait for session to settle
+        await new Promise(r => setTimeout(r, 200));
+        const meData = await api.auth.me();
+        const authenticatedUser = meData.user || data.session;
+
+        setUser(authenticatedUser);
+        const redirectPath = (authenticatedUser as any)?.role === 'admin' ? '/admin' : '/dashboard';
+        setLocation(redirectPath);
         return true;
       }
-      throw new Error(data.message);
+      return false;
     } catch (e: any) {
       toast({ title: "Login Failed", description: e.message, variant: "destructive" });
       return false;
     }
   };
 
+  const changePin = async (oldPin: string, newPin: string) => {
+    try {
+      const data = await api.auth.changePin(oldPin, newPin);
+      if (data.success) {
+        toast({ title: "Success", description: "PIN changed successfully" });
+        return true;
+      }
+      return false;
+    } catch (e: any) {
+      toast({ title: "Change Failed", description: e.message, variant: "destructive" });
+      return false;
+    }
+  };
+
   const signOut = async () => {
-    localStorage.removeItem("auth_session");
-    setUser(null);
-    setLocation("/");
+    try {
+      await api.auth.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+      setLocation("/");
+    }
   };
 
   return {
@@ -81,8 +107,8 @@ export function useAuth() {
     checkMobile,
     setupPin,
     loginWithPin,
+    changePin,
     signOut,
-    // Add compatibility for existing code
     phone: user?.mobile || user?.phone
   };
 }

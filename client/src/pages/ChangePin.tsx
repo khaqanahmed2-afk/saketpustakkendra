@@ -15,7 +15,7 @@ export default function ChangePin() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+
   const [oldPin, setOldPin] = useState("");
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
@@ -42,7 +42,7 @@ export default function ChangePin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (newPin !== confirmPin) {
       toast({ title: "Validation Error", description: "New PINs do not match", variant: "destructive" });
       return;
@@ -55,11 +55,10 @@ export default function ChangePin() {
 
     setIsSubmitting(true);
     try {
-      const mobile = user.mobile || user.phone;
       const res = await fetch(api.auth.changePin.path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mobile, oldPin, newPin }),
+        body: JSON.stringify({ oldPin, newPin }),
       });
 
       const data = await res.json();
@@ -79,7 +78,7 @@ export default function ChangePin() {
   return (
     <Layout>
       <div className="min-h-[80vh] flex items-center justify-center bg-slate-50/50 py-12 px-4">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="w-full max-w-md"
@@ -90,34 +89,37 @@ export default function ChangePin() {
                 <Lock className="w-8 h-8" />
               </div>
               <CardTitle className="text-2xl font-display font-bold">Change PIN</CardTitle>
-              <CardDescription>Update your 4-digit security PIN</CardDescription>
+              <CardDescription>
+                Secure your account by updating your 4-digit PIN.
+              </CardDescription>
             </CardHeader>
 
             <CardContent className="pb-8 px-8">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="oldPin">Current PIN</Label>
-                  <Input 
+                  <Input
                     id="oldPin"
                     type={showPin ? "text" : "password"}
-                    placeholder="****"
+                    placeholder="Enter current 4-digit PIN"
                     value={oldPin}
                     onChange={(e) => setOldPin(e.target.value)}
-                    className="h-12 rounded-xl text-center tracking-widest"
+                    className="h-12 rounded-xl text-center tracking-widest text-lg"
                     maxLength={4}
                     required
+                    autoFocus
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="newPin">New PIN</Label>
-                  <Input 
+                  <Input
                     id="newPin"
                     type={showPin ? "text" : "password"}
-                    placeholder="****"
+                    placeholder="Enter new 4-digit PIN"
                     value={newPin}
                     onChange={(e) => setNewPin(e.target.value)}
-                    className="h-12 rounded-xl text-center tracking-widest"
+                    className="h-12 rounded-xl text-center tracking-widest text-lg"
                     maxLength={4}
                     required
                   />
@@ -126,20 +128,21 @@ export default function ChangePin() {
                 <div className="space-y-2 relative">
                   <Label htmlFor="confirmPin">Confirm New PIN</Label>
                   <div className="relative">
-                    <Input 
+                    <Input
                       id="confirmPin"
                       type={showPin ? "text" : "password"}
-                      placeholder="****"
+                      placeholder="Repeat new 4-digit PIN"
                       value={confirmPin}
                       onChange={(e) => setConfirmPin(e.target.value)}
-                      className="h-12 rounded-xl text-center tracking-widest"
+                      className="h-12 rounded-xl text-center tracking-widest text-lg"
                       maxLength={4}
                       required
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => setShowPin(!showPin)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors p-1"
+                      title={showPin ? "Hide PIN" : "Show PIN"}
                     >
                       {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
@@ -147,16 +150,21 @@ export default function ChangePin() {
                 </div>
 
                 <ShinyButton type="submit" className="w-full h-12 text-lg" disabled={isSubmitting}>
-                  {isSubmitting ? "Updating..." : "Update PIN"}
+                  {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...</> : "Update PIN"}
                 </ShinyButton>
-                
-                <button 
-                  type="button"
-                  onClick={() => setLocation("/dashboard")}
-                  className="w-full text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Cancel
-                </button>
+
+                <div className="text-center space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setLocation("/dashboard")}
+                    className="w-full text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Forgot your PIN? Contact <span className="font-semibold cursor-pointer hover:underline text-primary">Support</span> or an Admin to reset it.
+                  </p>
+                </div>
               </form>
             </CardContent>
           </Card>

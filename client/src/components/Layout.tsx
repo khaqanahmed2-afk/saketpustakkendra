@@ -1,8 +1,10 @@
+
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { BookOpen, LogOut, User, LayoutDashboard, Upload } from "lucide-react";
+import { BookOpen, LogOut, User, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { ShinyButton } from "./ui/shiny-button";
+import { Logo } from "@/components/Logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,40 +19,41 @@ export function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-background font-sans selection:bg-primary/20">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-white/80 backdrop-blur-xl transition-all">
+      <header className="sticky top-0 z-50 w-full border-b border-primary/5 bg-secondary/80 backdrop-blur-xl transition-all">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group cursor-pointer">
-            <div className="bg-primary/10 p-2 rounded-xl group-hover:bg-primary/20 transition-colors">
-              <BookOpen className="w-6 h-6 text-primary" />
-            </div>
-            <span className="font-display font-bold text-xl tracking-tight text-foreground">
-              Saket Pustak Kendra
-            </span>
+          <Link href="/">
+            <Logo textSize="text-xl md:text-2xl" />
           </Link>
 
           <nav className="flex items-center gap-4">
+            <Link href="/shop" className={`${location === '/shop' ? 'text-primary font-bold bg-primary/5' : 'text-slate-500 hover:text-primary hover:bg-white'} hidden md:inline-flex items-center px-4 py-2 rounded-full text-sm transition-all duration-300`}>
+              Shop
+            </Link>
+
             {user ? (
-              <div className="flex items-center gap-4">
-                <Link href="/dashboard" className={location === '/dashboard' ? 'text-primary font-medium hidden md:block' : 'text-muted-foreground hover:text-foreground hidden md:block'}>
+              <div className="flex items-center gap-3 md:gap-4">
+                <Link href="/dashboard" className={location === '/dashboard' ? 'text-primary font-bold bg-primary/5 hidden md:inline-flex items-center px-4 py-2 rounded-full text-sm' : 'text-slate-500 hover:text-primary hover:bg-white hidden md:inline-flex items-center px-4 py-2 rounded-full text-sm transition-all duration-300'}>
                   Dashboard
                 </Link>
-                
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-white hover:bg-slate-50 transition-colors">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm font-medium hidden sm:inline">{user.email || user.phone || user.mobile || 'User'}</span>
+                    <button className="flex items-center gap-2 px-2 py-1.5 md:px-3 rounded-full border border-primary/10 bg-white hover:bg-primary/5 transition-all shadow-sm hover:shadow-md group">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-medium hidden sm:inline text-slate-700">{user.email?.split('@')[0] || 'User'}</span>
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuContent align="end" className="w-56 border-primary/10 shadow-xl shadow-primary/5 rounded-2xl p-2 bg-white/95 backdrop-blur-sm">
                     <Link href="/dashboard">
-                      <DropdownMenuItem className="cursor-pointer">
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                      <DropdownMenuItem className="cursor-pointer hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary rounded-xl px-4 py-3 my-1 font-medium transition-colors">
+                        <LayoutDashboard className="mr-3 h-4 w-4" />
                         <span>Dashboard</span>
                       </DropdownMenuItem>
                     </Link>
-                    <DropdownMenuItem onClick={signOut} className="text-red-600 focus:text-red-600 cursor-pointer">
-                      <LogOut className="mr-2 h-4 w-4" />
+                    <DropdownMenuItem onClick={signOut} className="text-red-500 hover:bg-red-50 hover:text-red-600 focus:bg-red-50 focus:text-red-600 cursor-pointer rounded-xl px-4 py-3 my-1 font-medium transition-colors">
+                      <LogOut className="mr-3 h-4 w-4" />
                       <span>Sign Out</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -58,7 +61,7 @@ export function Layout({ children }: { children: ReactNode }) {
               </div>
             ) : (
               <Link href="/login">
-                <ShinyButton variant="primary" className="px-6 py-2 text-sm">
+                <ShinyButton variant="primary" className="px-6 py-2 h-10 text-sm bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/20 rounded-xl">
                   Login
                 </ShinyButton>
               </Link>
@@ -77,30 +80,44 @@ export function Layout({ children }: { children: ReactNode }) {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <BookOpen className="w-5 h-5 text-primary" />
-                <span className="font-display font-bold text-lg">Saket Pustak Kendra</span>
+              <div className="mb-4">
+                <Logo textSize="text-lg" />
               </div>
               <p className="text-muted-foreground text-sm leading-relaxed">
                 Serving quality education since 1990. Your trusted partner for books, stationery, and educational resources in Rudauli & Ayodhya.
               </p>
             </div>
-            
+
             <div>
               <h4 className="font-bold mb-4">Contact</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>Rudauli, Ayodhya – 224120, UP</li>
-                <li>Mobile: 7754057200</li>
+                <li>
+                  <a
+                    href="https://www.google.com/maps/search/?api=1&query=Rudauli+Ayodhya+224120+UP"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-primary transition-colors cursor-pointer inline-flex items-center gap-1"
+                  >
+                    📍 Rudauli, Ayodhya – 224120, UP
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="tel:+917754057200"
+                    className="hover:text-primary transition-colors cursor-pointer inline-flex items-center gap-1"
+                  >
+                    📞 Mobile: 7754057200
+                  </a>
+                </li>
                 <li>GST: 09AFQPR5141C1ZA</li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-bold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/" className="hover:text-primary transition-colors">Home</Link></li>
-                <li><Link href="/about" className="hover:text-primary transition-colors">About</Link></li>
-                <li><Link href="/services" className="hover:text-primary transition-colors">Services</Link></li>
+                <li><Link href="/shop" className="hover:text-primary transition-colors">Shop</Link></li>
                 <li><Link href="/login" className="hover:text-primary transition-colors">Customer Login</Link></li>
                 <li><Link href="/admin" className="hover:text-primary transition-colors">Admin Import</Link></li>
               </ul>
